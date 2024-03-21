@@ -125,11 +125,11 @@ def display_menu(screen, algorithm, difficulty):
     background_image = pygame.image.load("background.jpg")  
     screen.blit(background_image, (0, -30))  # Blit the image onto the screen at the specified position
     #draw_text("Connect 4 Game", FONT, BLACK, screen, 200, 50)
-    draw_text("Algorithm:", FONT, BLACK, screen, 20, 530)
-    draw_text(algorithm, FONT, BLACK, screen, 130, 530)
-    draw_text("Difficulty:", FONT, BLACK, screen, 20, 580)
-    draw_text(str(difficulty), FONT, BLACK, screen, 130, 580)
-    draw_text("Press Enter To Start", FONT, BLACK, screen, 430, 640)
+    draw_text("Algorithm:", FONT, RED, screen, 20, 530)
+    draw_text(algorithm, FONT, RED, screen, 130, 530)
+    draw_text("Difficulty:", FONT, RED, screen, 20, 580)
+    draw_text(str(difficulty), FONT, RED, screen, 130, 580)
+    draw_text("Press Enter To Start", FONT, YELLOW, screen, 430, 640)
 
 def game_sidebar(screen):
     draw_text("Your Score: ", FONT, WHITE, screen, 730, 300)
@@ -150,7 +150,6 @@ def draw_miniboard(node,x_shift,y_shift):
     board=node.board
     board_boundaries = pygame.Rect(0, 0, 0, 0)  # Initialize boundaries
     value=node.utility_value
-    #print(value)
     draw_text(str("{:.2f}".format(value)), FONT, WHITE, screen, x_shift, y_shift)
     for c in range(COLUMN_COUNT):
         for r in range(ROW_COUNT):
@@ -233,10 +232,8 @@ def VisualizeTree(root):
     back_button_rect=Draw_backButton()
     parent_stack=[]
     parent_stack.append(root)
-    
-                        
-    
     playing = False
+
     while not playing:
         for event in pygame.event.get():
             
@@ -244,9 +241,9 @@ def VisualizeTree(root):
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if back_button_rect.collidepoint(event.pos):
-                    print(root.parent)
+                    # print(root.parent)
                     if len(parent_stack)!=0: 
-                        print("sui3")
+                        # print("sui3")
                         screen.fill(BLACK)
                         draw_metrics(expanded_count)
                         Draw_returnButton()
@@ -258,12 +255,12 @@ def VisualizeTree(root):
                         
                 elif return_button_rect.collidepoint(event.pos):
                     screen.fill(BLACK)
-                    print("suii")
+                    # print("suii")
                     playing=True
                     return
                 
                 elif boundaries[0].collidepoint(event.pos) and root.children:
-                    print("sui1")
+                    # print("sui1")
                     screen.fill(BLACK)
                     draw_metrics(expanded_count)
                     Draw_returnButton()
@@ -325,16 +322,14 @@ def VisualizeTree(root):
                     DrawChildren(root.children[6])
                     parent_stack.append(root)
                     root=root.children[6]
-                
-                    
-                    
 
-
-
-
-
-
-
+def Draw_Result(result):
+    Result_rect = pygame.Rect(750, 400, 250, 200)
+    Result_rect_color = RED
+    Result_rect_text = pygame.font.Font(None, 24).render(str(result), True, (255, 255, 255))
+    pygame.draw.rect(screen, Result_rect_color, Result_rect)
+    screen.blit(Result_rect_text, (Result_rect.x + 10, Result_rect.y + 90))
+    return Result_rect
 # Main function
 def main():
     Score_pos_ai= pygame.Rect(970, 250, 100, 100)
@@ -376,11 +371,11 @@ def main():
         display_menu(screen, algorithm, difficulty)
         pygame.display.flip()
 
-    print("Algorithm:", algorithm)
-    print("Difficulty:", difficulty)
+    # print("Algorithm:", algorithm)
+    # print("Difficulty:", difficulty)
     
     board = create_board()
-    print_board(board)
+    # print_board(board)
     game_over = False
 
     pygame.init()
@@ -430,6 +425,8 @@ def main():
                     pygame.draw.rect(screen, solve_tree_button_color, solve_tree_button_rect)
                     screen.blit(solve_tree_button_text, (solve_tree_button_rect.x + 10, solve_tree_button_rect.y + 10))
                     game_sidebar(screen)
+                    screen.fill(BLACK, Score_pos_ai)
+                    screen.fill(BLACK, Score_pos_player)
                     updateScorePlayer(screen,score[PLAYER])
                     updateScoreAi(screen,score[AI])
                     playing=1
@@ -442,11 +439,14 @@ def main():
                     if is_valid_location(board, col):
                         row = get_next_open_row(board, col)
                         drop_piece(board, row, col, PLAYER_PIECE)
-
-                        if winning_move(board, PLAYER_PIECE):
-                            score[PLAYER] += 1
-                            print(score)
-
+                        x= check_is_winning_move(board, PLAYER_PIECE,col,row)
+                        if x:
+                            score[PLAYER] += x 
+                            # print(score)
+                            screen.fill(BLACK, Score_pos_ai)
+                            screen.fill(BLACK, Score_pos_player)
+                            updateScorePlayer(screen,score[PLAYER])
+                            updateScoreAi(screen,score[AI])
                         turn += 1
                         turn = turn % 2
                 
@@ -458,7 +458,7 @@ def main():
             root = Node(None, [], 0 , board= board)
             # Traversing the children  
             if algorithm == "Minimax without pruning":
-                print(difficulty)
+                # print(difficulty)
                 start=time.time()
                 col, ROOT_VALUE   = minimax(board,  difficulty , True , 0 , root, AI_PIECE)
                 end=time.time()
@@ -468,7 +468,6 @@ def main():
                 col = col.column
             elif algorithm == "Minimax with pruning":
                 #modify later -------------------------------------------
-                print("pruniing")
                 start=time.time()
                 col, ROOT_VALUE  = minimax_with_pruning(board,  difficulty , -math.inf , math.inf , True , 0 , root , piece=  AI_PIECE)
                 end=time.time()
@@ -489,10 +488,14 @@ def main():
             if is_valid_location(board, col):
                 row = get_next_open_row(board, col)
                 drop_piece(board, row, col, AI_PIECE)
-
-                if winning_move(board, AI_PIECE):
-                    score[AI] +=1 
-                    print(score)
+                z=check_is_winning_move(board, AI_PIECE,col,row)
+                if z:
+                    score[AI] +=z 
+                    screen.fill(BLACK, Score_pos_ai)
+                    screen.fill(BLACK, Score_pos_player)
+                    updateScorePlayer(screen,score[PLAYER])
+                    updateScoreAi(screen,score[AI])
+                    # print(score)
 
                 draw_board(board)
 
@@ -500,15 +503,24 @@ def main():
                 turn = turn % 2
 
         if is_terminal_node(board):
-            game_over=True
+            #print(score)
+            screen.fill(BLACK, Score_pos_ai)
+            screen.fill(BLACK, Score_pos_player)
+            updateScorePlayer(screen,score[PLAYER])
+            updateScoreAi(screen,score[AI])
+            playing=0
+            #game_over=True
             if score[AI]>score[PLAYER]:
-                draw_text(str(f"AI Wins With Score: {score[AI]}"), FONT, WHITE, screen, 20, 150)
+                text=f"AI Wins With Score: {score[AI]}"
+                Draw_Result(text)
             elif score[AI]<score[PLAYER]:
-                draw_text(str(f"PLAYER Wins With Score: {score[PLAYER]}"), FONT, WHITE, screen, 20, 150)
+                text=f"PLAYER Wins With Score: {score[PLAYER]}"
+                Draw_Result(text)
             else:
-                draw_text(str(f"DRAW"), FONT, WHITE, screen, 20, 150)
+                text=f"DRAW"
+                Draw_Result(text)
             
-            pygame.time.wait(3000) # This line is added after the 2 last print functions
+            #pygame.time.wait(3000) # This line is added after the 2 last print functions
 
 
 if __name__ == "__main__":

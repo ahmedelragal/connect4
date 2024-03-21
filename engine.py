@@ -4,6 +4,7 @@ import numpy as np
 import pygame
 import sys
 import math
+import random
 ######################################################################################################################################################
 # Defining important variables
 score = [0, 0]  
@@ -52,89 +53,123 @@ def get_valid_locations(board):
 
 # Important functions for Minimax Implementation 
 winning_moves  = set()
-def winning_move(board, piece):
-	# Check horizontal locations
-	for c in range(COLUMN_COUNT - 3):
-		for r in range(ROW_COUNT):
-			if board[r][c] == piece and board[r][c + 1] == piece and board[r][c + 2] == piece and board[r][c + 3] == piece and ( (r,c) , (r , c+1 ) , (r , c+2) , (r , c+3) )  not in winning_moves:  
-				winning_moves.add( tuple( ((r,c) , (r , c+1 ) , (r , c+2) , (r , c+3))   )  )
-				return True
-
-	# Check vertical locations
-	for c in range(COLUMN_COUNT):
-		for r in range(ROW_COUNT - 3):
-			if board[r][c] == piece and board[r + 1][c] == piece and board[r + 2][c] == piece and board[r + 3][c] == piece and ( (r,c) , (r+1 , c ) , (r+2 , c) , (r+3 , c)  )  not in winning_moves:
-				winning_moves.add( tuple( ( (r,c) , (r+1 , c ) , (r+2 , c) , (r+3 , c) )  )  )
-
-				return True
-
-	# Check positively sloped diagonals
-	for c in range(COLUMN_COUNT - 3):
-		for r in range(ROW_COUNT - 3):
-			if board[r][c] == piece and board[r + 1][c + 1] == piece and board[r + 2][c + 2] == piece and board[r + 3][
-				c + 3] == piece and ( (r,c) , (r+1 , c+1 ) , (r+2 , c+2) , (r+3 , c+3) )   not in winning_moves:
-				winning_moves.add( tuple( ( (r,c) , (r+1 , c+1 ) , (r+2 , c+2) , (r+3 , c+3) ) )  )
-
-				return True
-
-	# Check negatively sloped diagonals
-	for c in range(COLUMN_COUNT - 3):
-		for r in range(3, ROW_COUNT):
-			if board[r][c] == piece and board[r - 1][c + 1] == piece and board[r - 2][c + 2] == piece and board[r - 3][
-				c + 3] == piece  and  ( (r,c) , (r-1 , c+1 ) , (r-2 , c+2) , (r-3 , c+3)  )   not in winning_moves:
-				winning_moves.add( tuple( ( (r,c) , (r-1 , c+1 ) , (r-2 , c+2) , (r-3 , c+3)  ) )  )
+def check_is_winning_move(board , piece, col, row):
+        count = 0
+        def check_direction(dc, dr):
+            nonlocal count
+            for c in range(COLUMN_COUNT - 3):
+                for r in range(ROW_COUNT - 3) if dr != -1 else range(3, ROW_COUNT):
+                    if all(
+                        board[r + i * dr][c + i * dc] == piece for i in range(4)
+                    ):
+                        count += (
+                            1
+                            if any(
+                                c + i * dc == col and r + i * dr == row
+                                for i in range(4)
+                            )
+                            else 0
+                        )
  
-				return True
+        # Check horizontal
+        for c in range(COLUMN_COUNT - 3): # msh mhtag a5r 3 col fl horizontal
+            for r in range(ROW_COUNT):
+                if all(board[r][c + i] == piece for i in range(4)):  # if all statisfy condition
+                    # if all (5asa bel for loop l gwa) lazm kol el i's statisfy condition
+                    count += ( # ana l3bt f col w row f bcheck en l 4 piece dol , el col w row mnhom
+                        1 if any(c + i == col and r == row for i in range(4)) else 0
+                    )
+ 
+        # Check vertical
+        for c in range(COLUMN_COUNT):
+            for r in range(ROW_COUNT - 3):
+                if all(board[r + i][c] == piece for i in range(4)):
+                    count += (
+                        1 if any(c == col and r + i == row for i in range(4)) else 0
+                    )
+ 
+        # Check positive slope diagonal
+        check_direction(1, 1)
+ 
+        # Check negative slope diagonal
+        check_direction(1, -1)
+ 
+        return count
 
+# def evaluate_window(window, piece):
+# 	score = 0	
+# 	opp_piece = PLAYER_PIECE
+# 	if piece == PLAYER_PIECE:
+# 		opp_piece = AI_PIECE
+
+# 	if window.count(piece) == 4:
+# 		# print("100000")
+# 		# score += 100000
+# 		score +=  4
+# 	elif window.count(piece) == 3 and window.count(EMPTY) == 1:
+# 		# print("5000")
+# 		# score += 5000
+# 		score += 3
+# 	elif window.count(piece) == 2 and window.count(EMPTY) == 2:
+# 		# print("200")
+# 		# score += 200
+# 		score += 2 
+# 	elif window.count(opp_piece) == 3 and window.count(EMPTY) == 1 : 
+# 		score += 1 
+# 	# elif window.count(piece) == 2  and window.count(EMPTY) > 2:
+# 	# 		# print("20")
+# 	# 		score += 10  # Encourage building connections
+# 	if window.count(opp_piece) == 4 : 
+# 		score -= 4
+# 	elif window.count(opp_piece) == 3 and window.count(EMPTY) == 1:
+# 		# print("-2000")
+# 		# score -= 4000
+# 		score -= 3
+# 	elif window.count(opp_piece) == 2 and window.count(EMPTY) == 2 :
+# 		# print("-200")
+# 		# score -=  100
+# 		score -= 2
+# 	# elif window.count(opp_piece) == 2 and window.count(EMPTY) > 2:
+# 	# 	# print("-5")
+# 	# 	# score -= 5  #
+# 	# 	score -= 2
+# 	elif window.count(opp_piece) == 3 and window.count(EMPTY) == 1 : 
+# 		score -= 1 
+# 			# Consider position in the board (center prioritization)
+# 	# center_column = window[2] == piece
+# 	# if center_column:
+# 	# 	# print("15")
+# 	# 	score +=  2  # Encourage occupying the center
+
+# 	return score
 
 def evaluate_window(window, piece):
-	score = 0	
-	opp_piece = PLAYER_PIECE
-	if piece == PLAYER_PIECE:
-		opp_piece = AI_PIECE
+    score = 0
+    if piece == 2 :
+        opponent_piece=1
+    else:
+        opponent_piece=2
 
-	if window.count(piece) == 4:
-		# print("100000")
-		# score += 100000
-		score +=  4
-	elif window.count(piece) == 3 and window.count(EMPTY) == 1:
-		# print("5000")
-		# score += 5000
-		score += 3
-	elif window.count(piece) == 2 and window.count(EMPTY) == 2:
-		# print("200")
-		# score += 200
-		score += 2 
-	elif window.count(opp_piece) == 3 and window.count(EMPTY) == 1 : 
-		score += 1 
-	# elif window.count(piece) == 2  and window.count(EMPTY) > 2:
-	# 		# print("20")
-	# 		score += 10  # Encourage building connections
-	if window.count(opp_piece) == 4 : 
-		score -= 4
-	elif window.count(opp_piece) == 3 and window.count(EMPTY) == 1:
-		# print("-2000")
-		# score -= 4000
-		score -= 3
-	elif window.count(opp_piece) == 2 and window.count(EMPTY) == 2 :
-		# print("-200")
-		# score -=  100
-		score -= 2
-	# elif window.count(opp_piece) == 2 and window.count(EMPTY) > 2:
-	# 	# print("-5")
-	# 	# score -= 5  #
-	# 	score -= 2
-	elif window.count(opp_piece) == 3 and window.count(EMPTY) == 1 : 
-		score -= 1 
-			# Consider position in the board (center prioritization)
-	# center_column = window[2] == piece
-	# if center_column:
-	# 	# print("15")
-	# 	score +=  2  # Encourage occupying the center
+    opponent_consecutive = window.count(opponent_piece)
+    consecutive_pieces = window.count(piece)
+    free_slots = window.count(0)
+	
+    if consecutive_pieces == 4:
+        score += 2000 # Win condition
+    elif consecutive_pieces == 3 and free_slots == 1:
+        score += 6  # Strong winning opportunity
+    elif consecutive_pieces == 2 and free_slots == 2:
+        score += 1  # Potential winning connection
+    elif opponent_consecutive == 3 and free_slots == 1:
+        score += 11
+    
+    if opponent_consecutive == 4:
+        score -= 1000  # Win oponent condition
+  
+    if opponent_consecutive == 2 and free_slots == 2:
+        score -= 2
 
-	return score
-
-
+    return score
 
 
 def score_position(board, piece):
@@ -416,113 +451,4 @@ def expect_minimax(board, depth,  maximizingPlayer, current_depth  , newnode  , 
 
 	return  best_col, max_value 
 
-
-
-######################################################################################################################################################
-# # Main Loop
-# board = create_board()
-# print_board(board)
-# game_over = False
-
-# pygame.init()
-
-# SQUARESIZE = 100
-
-# width = COLUMN_COUNT * SQUARESIZE
-# height = (ROW_COUNT+1) * SQUARESIZE
-
-# size = (width, height)
-
-# RADIUS = int(SQUARESIZE/2 - 5)
-
-# screen = pygame.display.set_mode(size)
-# draw_board(board)
-# pygame.display.update()
-# myfont = pygame.font.SysFont("monospace", 75)
-# turn  = PLAYER
-# while not game_over:
-
-# 	for event in pygame.event.get():
-# 		if event.type == pygame.QUIT:
-# 			sys.exit()
-
-# 		if event.type == pygame.MOUSEMOTION:
-# 			pygame.draw.rect(screen, BLACK, (0,0, width, SQUARESIZE))
-# 			posx = event.pos[0]
-# 			if turn == PLAYER:
-# 				pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE/2)), RADIUS)
-
-# 		pygame.display.update()
-
-# 		if event.type == pygame.MOUSEBUTTONDOWN:
-# 			pygame.draw.rect(screen, BLACK, (0,0, width, SQUARESIZE))
-# 			if turn == PLAYER:
-# 				posx = event.pos[0]
-# 				col = int(math.floor(posx/SQUARESIZE))
-
-# 				if is_valid_location(board, col):
-# 					row = get_next_open_row(board, col)
-# 					drop_piece(board, row, col, PLAYER_PIECE)
-
-# 					if winning_move(board, PLAYER_PIECE):
-						
-# 						score[PLAYER] += 1
-# 						print(score)
-
-
-# 					turn += 1
-# 					turn = turn % 2
-
-# 					# print_board(board)
-# 					draw_board(board)
-
-
-# 	# # Ask for Player 2 Input
-# 	if turn == AI and not game_over:				
-
-# 		root = Node(None, [], 0 , board= board)
-  
-# 		# If u want to call expect minimax uncomment the following line 
-# 		# col , value = expect_minimax(board , 2, True , 0  , root , piece = AI_PIECE)
-   
-# 		# if u want to call minimax or pruning minimax uncomment  the following line 
-#   		# col, value   = minimax_with_pruning(board,  2 , -math.inf , math.inf , True , 0 , root , piece=  AI_PIECE)
-# 		col , value = minimax (board ,  2 , True  , 0 , root ,  piece = AI_PIECE)
-# 		col = col.column
-# 		print(f"Final Value {value} ")
-
-# 		# Printing  Tree 
-
-# 		for child in root.children :
-# 			print("***********************************level 1****************************************") 
-# 			print(child.board)
-# 			print(f"\n{child.utility_value}") 
-			
-# 			for c  in child.children : 
-# 				print("***********************************level 2****************************************") 
-# 				print(c.board)
-# 				print(f"\n{c.utility_value}") 
-# 				# for x in c.children : 
-# 				# 		print("*************************************************Level 3********************************")
-# 				# 		print(x.utility_value)
-				
-#     			#   					!!!!!!!!!!!!!!!!!!!!!!  Hassan !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
-# 				# 							Take care col in Minimax is Node while a real column in Expect Minimax
-
-# 		if is_valid_location(board, col):
-# 			#pygame.time.wait(500)
-# 			row = get_next_open_row(board, col)
-# 			drop_piece(board, row, col, AI_PIECE)
-
-# 			if winning_move(board, AI_PIECE):
-# 				score[AI] +=1 
-# 			draw_board(board)
-
-
-# 			turn += 1
-# 			turn = turn % 2
-
-# 	if game_over:
-# 		pygame.time.wait(3000)
-# ######################################################################################################################################################
 
